@@ -1,20 +1,19 @@
 import pygame
 import sys
 from pygame.locals import *
-import math
-import cmath
+import functools
 
-WIDTH = 640
-HEIGHT = 480
-pygame.init()
+# WIDTH = 640
+# HEIGHT = 480
+# pygame.init()
 
-view = pygame.Rect(0,0, 640, 480)
-screen = pygame.display.set_mode((view.w, view.h), 0, 32)
-pxarray = pygame.PixelArray(screen)
-
-color = 255, 0, 0
-first = True
-prev_x, prev_y = 0, 0
+# view = pygame.Rect(0,0, 640, 480)
+# screen = pygame.display.set_mode((view.w, view.h), 0, 32)
+# pxarray = pygame.PixelArray(screen)
+#
+# color = 255, 0, 0
+# first = True
+# prev_x, prev_y = 0, 0
 
 
 def bisect_rect(r):
@@ -22,7 +21,6 @@ def bisect_rect(r):
     if r.width >= r.height:
         a = pygame.Rect(r)
         a.width /= 2
-        print(a.width)
         b = pygame.Rect(r)
         b.width = r.width - a.width
         b.left += a.width
@@ -35,39 +33,32 @@ def bisect_rect(r):
         b.top += a.height
         return (a, b)
 
-def drawRectStack(rs):
+def allSame(seq):
+    return functools.reduce(lambda x, y: x == y, seq)
+
+def insetOne(r):
+    r.left += 1
+    r.top += 1
+    r.width -= 2
+    r.height -= 2
+
+def drawRectStack(rs, drawFunction):
     r = rs.pop()
     if (r is not None):
-        for i in bisect_rect(r):
-            rs.append(i)
-
-def drawPoint(x, y):
-    c = pixelToComplex(x, y)
-    steps = suite(c)
-    col = color(steps)
-    pxArray[x, y] = col
-    return col
+        p = perimeter(r)
+        pCol = map(drawFunction, p)
+        if (allSame(pCol)):
+            fillRect(r, pCol[0])
+        else:
+            insetOne(r)
+            rs.extend( bisect_rect(r) )
 
 def perimeter(r):
-    print ("debugging perimeter")
-    x = r.left
-    y = r.top
-    peri = [(x, y)]
-    peri.extend([(x, r.top) for x in range(r.left + 1, r.right)])
-    print (len (peri))
+    peri = [(x, r.top) for x in range(r.left, r.right)]
     peri.extend([(r.right - 1, y) for y in range(r.top + 1, r.bottom)])
-    print (len (peri))
     peri.extend([(x, r.bottom - 1) for x in range(r.right - 2, r.left - 1, -1)])
-    print (len (peri))
-    peri.extend([(r.left, y) for y in range(r.bottom -2, r.top, -1)])
-    print(peri)
+    peri.extend([(r.left, y) for y in range(r.bottom - 2, r.top, -1)])
     return peri
-
-def drawPoints(pts):
-    for x, y in peri:
-        c = drawPoint(x, y)
-        if c != c0: allSame = False
-    return allSame
 
 def color(nSteps):
 	"""returns a color Object for the number of steps returend by suite()"""
@@ -83,7 +74,8 @@ def suite(c):
 		n += 1
 	return n
 
-def pixelToComplex(x, y, space, view):
+def pixelToComplex(p, view, space):
+    """map p in view coordinates into complex plane 'space'"""
     px = x / view.width * space.width + space.left
     py = y / view.height * space.height + space.top
     return complex(px, py)

@@ -2,9 +2,14 @@ import unittest
 
 from bisect_rect import *
 
+points = []
+
+def drawFn(p):
+    points.append(p)
+
 class test(unittest.TestCase):
     def setUp(self):
-        pass
+        points = []
 
     def tearDown(self):
         pass
@@ -35,13 +40,35 @@ class test(unittest.TestCase):
 
     def test_recu(self):
         rs = [pygame.Rect(0, 0, 256, 256)]
-        drawRectStack(rs)
-        self.assertEqual(rs[0], pygame.Rect(0,0, 128, 256))
-        self.assertEqual(rs[1], pygame.Rect(128, 0, 128, 256))
-        drawRectStack(rs)
-        self.assertEqual(rs[1], pygame.Rect(128, 0, 128, 128))
-        self.assertEqual(rs[2], pygame.Rect(128, 128, 128, 128))
+        drawRectStack(rs, drawFn)
+        self.assertEqual(rs[0], pygame.Rect(1, 1, 127, 254))
+        self.assertEqual(rs[1], pygame.Rect(128, 1, 127, 254))
+        drawRectStack(rs, drawFn)
+        self.assertEqual(rs[1], pygame.Rect(129, 2, 125, 126))
+        self.assertEqual(rs[2], pygame.Rect(129, 128, 125, 126))
 
+        expectedPoints = [(x, y) for x in range (256) for y in range (255)]
+        print(expectedPoints)
+        pp = map(lambda p: p in expectedPoints, points)
+        print(pp)
+        self.assertTrue(all(pp))
+
+    def test_allSame(self):
+        pCol = [1] * 100
+        self.assertTrue(allSame(pCol))
+
+        pCol[-1] = 2
+        self.assertFalse(allSame(pCol))
+
+    def test_drawRectStack(self):
+        view = pygame.Rect(0, 0, 64, 64)
+        space = pygame.Rect(-2.0, -2.0, 2.0, 2.0)
+
+    def test_insetOne(self):
+        r = pygame.Rect(10, 10, 100, 100)
+        insetOne(r)
+        self.assertEqual(r.left, 11)
+        self.assertEqual(r.width, 98)
 
 if __name__ == "__main__":
     unittest.main()
