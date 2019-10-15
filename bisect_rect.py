@@ -42,13 +42,13 @@ def insetOne(r):
     r.width -= 2
     r.height -= 2
 
-def drawRectStack(rs, drawFunction):
+def drawRectStack(rs, pxDraw, rectDraw):
     r = rs.pop()
     if (r is not None):
         p = perimeter(r)
-        pCol = map(drawFunction, p)
-        if (allSame(pCol)):
-            fillRect(r, pCol[0])
+        ip = map(pxDraw, p)
+        if (allSame(ip)):
+            rectDraw(r, ip[0])
         else:
             insetOne(r)
             rs.extend( bisect_rect(r) )
@@ -66,45 +66,8 @@ def color(nSteps):
 	col.hsva = (nSteps, 100, 100, 100)
 	return col
 
-def suite(c):
-	z = complex(0, 0)
-	n = 0
-	while(abs(z) < 2 and n < 255):
-		z = z*z + c
-		n += 1
-	return n
-
-def pixelToComplex(p, view, space):
-    """map p in view coordinates into complex plane 'space'"""
-    px = x / view.width * space.width + space.left
-    py = y / view.height * space.height + space.top
-    return complex(px, py)
-
-# def run():
-#     while True:
-#         for event in pygame.event.get():
-#             if event.type == QUIT:
-#                 pygame.quit()
-#                 sys.exit()
-#
-#         screen.fill((0,0,0))
-#
-#         for y, py in enumerate(pxarray):
-#             for x, px in enumerate(py):
-#                 if int(x) == (int(y)*int(y)) - 30*int(y) + 450:
-#                     pxarray[y][x] = 0xFFFFFF
-#
-#                     if first:
-#                         first = False
-#                         prev_x, prev_y = x, y
-#                         continue
-#
-#                     pygame.draw.line(screen, color, (prev_y, prev_x), (y, x))
-#                     prev_x, prev_y = x, y
-#
-#         first = True
-#         pygame.display.flip()
-
-
-if __name__ == "__main__":
-    pass
+def transform(point, view, domain):
+    p = [0, 0]
+    p[0] = (point[0] - view.left ) / view.width * domain.width + domain.left
+    p[1] = (point[1] - view.top) / view.height * domain.height + domain.top
+    return p
