@@ -1,4 +1,5 @@
 import pygame
+import pygame.draw
 import sys
 from pygame.locals import *
 import functools
@@ -17,24 +18,27 @@ import functools
 
 
 def bisect_rect(r):
-    """bisects pygame rectangle and returns tuple of rectangles"""
+    """bisects pygame rectangle and returns list of 2 rectangles"""
     if r.width >= r.height:
         a = pygame.Rect(r)
-        a.width /= 2
+        a.width = int(r.width / 2)
         b = pygame.Rect(r)
         b.width = r.width - a.width
         b.left += a.width
-        return (a, b)
+        return [a, b]
     else:
         a = pygame.Rect(r)
-        a.height /= 2
+        a.height = int(r.height / 2)
         b = pygame.Rect(r)
         b.height = r.height - a.height
         b.top += a.height
-        return (a, b)
+        return [a, b]
 
 def allSame(seq):
-    return functools.reduce(lambda x, y: x == y, seq)
+    if len(seq):
+        return functools.reduce(lambda x, y: x == y, seq, True)
+    else:
+        return None
 
 def insetOne(r):
     r.left += 1
@@ -42,16 +46,30 @@ def insetOne(r):
     r.width -= 2
     r.height -= 2
 
-def drawRectStack(rs, pxDraw, rectDraw):
+def stepDrawRectStack(rs, s, getColor):
     r = rs.pop()
     if (r is not None):
-        p = perimeter(r)
-        ip = map(pxDraw, p)
-        if (allSame(ip)):
-            rectDraw(r, ip[0])
+        with pygame.PixelArray(s) as pa:
+            peri = perimeter(r)
+            colors = list(map(getColor, peri))
+        if (allSame(colors)):
+            fill = 0
+            pygame.draw.rect(s, colors[0], r, fill)
+            s.blit(r)
         else:
+            drawPerimeter(s, peri, colors)
+            # draw inside
             insetOne(r)
-            rs.extend( bisect_rect(r) )
+            a, b = bisect_rect(r)
+            rs.extend( [a, b] )
+    return rs
+
+def drawPerimeter(s, peri, colors):
+    assert(len(peri) == len(colors))
+    with pygame.PixelArray(s) as pa:
+        for (x, y), b in zip(peri, colors):
+            pa[x, y] = b
+
 
 def perimeter(r):
     peri = [(x, r.top) for x in range(r.left, r.right)]
